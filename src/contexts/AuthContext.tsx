@@ -1,20 +1,14 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  profile: {
-    full_name: string;
-  };
-}
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { authApi, type AuthTokens, type UserProfile } from '../api/auth';
 
 interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  login: (token: string, user: User) => void;
-  logout: () => void;
+  user: UserProfile | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
+  isInitializing: boolean;
+  login: (tokens: AuthTokens, user?: UserProfile) => Promise<void>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,49 +25,109 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+const ACCESS_TOKEN_KEY = 'access_token';
+const REFRESH_TOKEN_KEY = 'refresh_token';
+const USER_KEY = 'user';
+
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const storedToken = localStorage.getItem('access_token');
-    const storedUser = localStorage.getItem('user');
+  const clearSession = () => {
+    setAccessToken(null);
+    setRefreshToken(null);
+    setUser(null);
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  };
 
-    if (storedToken && storedUser) {
+  const persistTokens = (tokens: AuthTokens) => {
+    if (tokens.access) {
+      setAccessToken(tokens.access);
+      localStorage.setItem(ACCESS_TOKEN_KEY, tokens.access);
+    }
+    if (tokens.refresh) {
+      setRefreshToken(tokens.refresh);
+      localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh);
+    }
+  };
+
+  const loadCurrentUser = useCallback(async () => {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+      const profile = await authApi.getCurrentUser();
+      setUser(profile);
+      localStorage.setItem(USER_KEY, JSON.stringify(profile));
       } catch (error) {
-        console.error('Error parsing stored user data:', error);
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-      }
+      console.error('Failed to load current user:', error);
+      clearSession();
     }
   }, []);
 
-  const login = (newToken: string, newUser: User) => {
-    setToken(newToken);
-    setUser(newUser);
-    localStorage.setItem('access_token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
+  const initialize = useCallback(async () => {
+    const storedAccess = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const storedRefresh = localStorage.getItem(REFRESH_TOKEN_KEY);
+    const storedUser = localStorage.getItem(USER_KEY);
+
+    if (storedAccess) {
+      setAccessToken(storedAccess);
+    }
+    if (storedRefresh) {
+      setRefreshToken(storedRefresh);
+    }
+
+    if (storedAccess) {
+      if (storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser) as UserProfile;
+          setUser(parsed);
+        } catch (error) {
+          console.error('Error parsing stored user data:', error);
+          localStorage.removeItem(USER_KEY);
+          await loadCurrentUser();
+        }
+      } else {
+        await loadCurrentUser();
+      }
+    } else {
+      clearSession();
+    }
+
+    setIsInitializing(false);
+  }, [loadCurrentUser]);
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  const login = async (tokens: AuthTokens, userFromResponse?: UserProfile) => {
+    persistTokens(tokens);
+
+    if (userFromResponse) {
+      setUser(userFromResponse);
+      localStorage.setItem(USER_KEY, JSON.stringify(userFromResponse));
+    }
+
+    // Always refresh user from backend to ensure context is accurate
+    await loadCurrentUser();
   };
 
   const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
+    clearSession();
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
+        accessToken,
+        refreshToken,
+        isAuthenticated: !!accessToken && !!user,
+        isInitializing,
         login,
         logout,
-        isAuthenticated: !!token && !!user,
       }}
     >
       {children}

@@ -1,14 +1,16 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { authApi, type RegisterData } from '../api/auth';
+import { authApi, type RegisterPayload } from '../api/auth';
+
+type RegisterForm = RegisterPayload;
 
 export const Register = () => {
-  const [formData, setFormData] = useState<RegisterData>({
-    username: '',
+  const [form, setForm] = useState<RegisterForm>({
+    full_name: '',
     email: '',
     password: '',
-    full_name: '',
+    confirmPassword: '',
   });
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
@@ -19,11 +21,17 @@ export const Register = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await authApi.register(formData);
-      login(response.tokens.access, response.user);
+      const response = await authApi.register(form);
+      await login(response.tokens, response.user);
       navigate('/dashboard');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
@@ -53,22 +61,8 @@ export const Register = () => {
             <input
               id="full_name"
               type="text"
-              value={formData.full_name}
-              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label htmlFor="username" className="block text-gray-700 text-sm font-bold mb-2">
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              value={form.full_name}
+              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
             />
@@ -81,8 +75,8 @@ export const Register = () => {
             <input
               id="email"
               type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
             />
@@ -96,8 +90,8 @@ export const Register = () => {
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="shadow appearance-none border rounded w-full py-2 px-3 pr-10 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 required
               />
@@ -119,6 +113,20 @@ export const Register = () => {
                 )}
               </button>
             </div>
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="confirmPassword" className="block text-gray-700 text-sm font-bold mb-2">
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={form.confirmPassword}
+              onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              required
+            />
           </div>
 
           <button

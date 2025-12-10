@@ -1,11 +1,11 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { authApi, type LoginCredentials } from '../api/auth';
+import { authApi, type LoginPayload } from '../api/auth';
 
 export const Login = () => {
-  const [credentials, setCredentials] = useState<LoginCredentials>({
-    username: '',
+  const [form, setForm] = useState<LoginPayload>({
+    email: '',
     password: '',
   });
   const [error, setError] = useState<string>('');
@@ -20,8 +20,9 @@ export const Login = () => {
     setLoading(true);
 
     try {
-      const response = await authApi.login(credentials);
-      login(response.tokens.access, response.user);
+      const response = await authApi.login(form);
+      await login(response.tokens, response.user);
+      // Refresh user data to ensure context is aligned with backend
       navigate('/dashboard');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
@@ -45,14 +46,14 @@ export const Login = () => {
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="username" className="block text-gray-700 text-sm font-bold mb-2">
-              Username
+            <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">
+              Email
             </label>
             <input
-              id="username"
-              type="text"
-              value={credentials.username}
-              onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+              id="email"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               required
             />
@@ -66,8 +67,8 @@ export const Login = () => {
               <input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
-                value={credentials.password}
-                onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="shadow appearance-none border rounded w-full py-2 px-3 pr-10 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 required
               />

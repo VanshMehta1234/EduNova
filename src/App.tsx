@@ -9,6 +9,7 @@ import { Dashboard } from './pages/Dashboard';
 import { NewLesson } from './pages/NewLesson';
 import { LessonDetail } from './pages/LessonDetail';
 import { PublicLesson } from './pages/PublicLesson';
+import { Explore } from './pages/Explore';
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
               }
             />
             <Route path="/public/:slug" element={<PublicLesson />} />
+            <Route path="/explore" element={<Explore />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Layout>
