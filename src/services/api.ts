@@ -1,11 +1,13 @@
+import { STORAGE_KEYS } from '../constants/storage';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 const buildHeaders = (token?: string, extraHeaders?: HeadersInit): HeadersInit => {
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...extraHeaders,
+    ...(extraHeaders as Record<string, string>),
   };
 
   if (token) {
@@ -19,7 +21,7 @@ async function request<T>(
   endpoint: string,
   { method = 'GET', body, headers }: { method?: HttpMethod; body?: unknown; headers?: HeadersInit } = {}
 ): Promise<T> {
-  const token = localStorage.getItem('access_token') || undefined;
+  const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) || undefined;
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
     headers: buildHeaders(token, headers),

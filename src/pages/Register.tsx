@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authApi, type RegisterPayload } from '../api/auth';
@@ -36,7 +36,6 @@ export const Register = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Registration failed';
       setError(errorMessage);
-      console.error('Registration error:', err);
     } finally {
       setLoading(false);
     }

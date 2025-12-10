@@ -92,9 +92,8 @@ export const NewLesson = () => {
       setSummary(result.summary);
       setImageUrlsText(result.image_urls.join(', '));
       setVideoLinksText(result.video_links.map((v) => `${v.title} | ${v.url}`).join('\n'));
-    } catch (err) {
+    } catch {
       setError('Failed to generate lesson. Please try again.');
-      console.error('Generate error:', err);
     } finally {
       setLoading(false);
     }

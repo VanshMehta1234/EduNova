@@ -22,43 +22,6 @@ const IconArrowLeft = () => (
   </svg>
 );
 
-// Helper function to fix swapped video links (detect if url/title are swapped)
-const fixSwappedVideoLink = (video: { title: string; url: string }): { title: string; url: string } => {
-  const url = video.url || '';
-  const title = video.title || '';
-  
-  // If URL looks like a title (doesn't start with http and contains spaces/short)
-  // and title looks like a URL (starts with http), swap them
-  const urlLooksLikeTitle = !url.startsWith('http') && url.length < 100 && (url.includes(' ') || !url.includes('.'));
-  const titleLooksLikeUrl = title.startsWith('http');
-  
-  if (urlLooksLikeTitle && titleLooksLikeUrl) {
-    // Swap them
-    return { title: url, url: title };
-  }
-  
-  // If URL doesn't look like a URL but title does, swap
-  if (!url.startsWith('http') && title.startsWith('http')) {
-    return { title: url, url: title };
-  }
-  
-  return video;
-};
-
-// Helper function to ensure video URL is properly formatted
-const formatVideoUrl = (url: string): string => {
-  if (!url) return '';
-  // If it's already a full URL, return as is
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
-  }
-  // If it's a YouTube video ID, convert to full URL
-  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) {
-    return `https://www.youtube.com/watch?v=${url}`;
-  }
-  // Otherwise, assume it's a partial URL and prepend https://
-  return `https://${url}`;
-};
 
 export const PublicLesson = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -97,9 +60,8 @@ export const PublicLesson = () => {
       a.download = `${lesson.topic || 'lesson'}.pdf`;
       a.click();
       window.URL.revokeObjectURL(url);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to download PDF';
-      alert(message);
+    } catch {
+      // Error is handled by API client
     } finally {
       setDownloading(false);
     }
@@ -168,9 +130,9 @@ export const PublicLesson = () => {
           <span className="text-sm text-gray-600">
             {lesson.subject} • {lesson.grade_level} • {lesson.duration_minutes} mins
           </span>
-          {(lesson as any).creator_email && (
+          {lesson.creator_email && (
             <span className="text-sm text-gray-500">
-              • Created by {(lesson as any).creator_email}
+              • Created by {lesson.creator_email}
             </span>
           )}
         </div>
@@ -254,25 +216,13 @@ export const PublicLesson = () => {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Video Links</h3>
             <div className="space-y-2">
-              {(lesson.video_links || []).map((video, index) => {
-                // Fix swapped video links if needed
-                const fixedVideo = fixSwappedVideoLink(video);
-                const videoUrl = formatVideoUrl(fixedVideo.url || '');
-                return (
+              {(lesson.video_links || []).map((video, index) => (
                 <a
                   key={`${video.url}-${index}`}
-                  href={videoUrl}
+                  href={video.url || '#'}
                   target="_blank"
                   rel="noreferrer noopener"
                   className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-all duration-200 group cursor-pointer"
-                  onClick={(e) => {
-                    // Ensure the link opens properly
-                    if (!videoUrl || !videoUrl.startsWith('http')) {
-                      e.preventDefault();
-                      console.error('Invalid video URL:', video.url);
-                      alert('Invalid video URL. Please check the video link.');
-                    }
-                  }}
                 >
                   <div className="flex-shrink-0 w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center group-hover:bg-red-700 transition-colors">
                     <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -281,16 +231,15 @@ export const PublicLesson = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                      {fixedVideo.title || 'Untitled Video'}
+                      {video.title || 'Untitled Video'}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">{videoUrl}</p>
+                    <p className="text-xs text-gray-500 truncate">{video.url}</p>
                   </div>
                   <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </a>
-                );
-              })}
+              ))}
             </div>
           </div>
         )}

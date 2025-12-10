@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authApi, type LoginPayload } from '../api/auth';
@@ -27,7 +27,6 @@ export const Login = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
-      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }

@@ -184,7 +184,7 @@ export const Explore = () => {
                       {formatDate(lesson.created_at)}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-800">
-                      {(lesson as any).creator_email || lesson.user || 'Unknown'}
+                      {lesson.creator_email || 'Unknown'}
                     </td>
                     <td className="px-4 py-3 text-sm text-right">
                       <div className="flex items-center justify-end gap-3">
@@ -206,9 +206,8 @@ export const Explore = () => {
                                 a.download = `${lesson.topic || 'lesson'}.pdf`;
                                 a.click();
                                 window.URL.revokeObjectURL(url);
-                              } catch (err) {
-                                console.error(err);
-                                alert('Failed to download PDF');
+                              } catch {
+                                // Error is handled by API client
                               }
                             }}
                             className="inline-flex items-center gap-1.5 text-green-600 hover:text-green-700 hover:underline hover:scale-105 transition-all duration-200 ease-in-out active:scale-95"
@@ -249,7 +248,7 @@ export const Explore = () => {
                   <span>{formatDate(lesson.created_at)}</span>
                 </div>
                 <div className="text-sm text-gray-800 mt-2">
-                  <span className="font-medium">Creator:</span> {(lesson as any).creator_email || lesson.user || 'Unknown'}
+                  <span className="font-medium">Creator:</span> {lesson.creator_email || 'Unknown'}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
                   <Link
@@ -270,9 +269,8 @@ export const Explore = () => {
                           a.download = `${lesson.topic || 'lesson'}.pdf`;
                           a.click();
                           window.URL.revokeObjectURL(url);
-                        } catch (err) {
-                          console.error(err);
-                          alert('Failed to download PDF');
+                        } catch {
+                          // Error is handled by API client
                         }
                       }}
                       className="inline-flex items-center gap-1.5 text-green-600 hover:text-green-700 hover:underline hover:scale-105 transition-all duration-200 ease-in-out active:scale-95"

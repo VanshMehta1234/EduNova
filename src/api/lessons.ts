@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { STORAGE_KEYS } from '../constants/storage';
 
 export interface LessonInput {
   topic: string;
@@ -67,13 +68,20 @@ export const lessonsApi = {
   },
 
   async toggleVisibility(id: number | string): Promise<LessonResponse> {
-    const data = await apiClient.patch<any>(`/lessons/${id}/visibility/`, {});
+    interface ToggleResponse {
+      message?: string;
+      lesson?: LessonResponse;
+    }
+    const data = await apiClient.patch<ToggleResponse | LessonResponse>(`/lessons/${id}/visibility/`, {});
     // Backend returns { message, lesson }; fall back to data if shape differs.
-    return (data?.lesson as LessonResponse) ?? (data as LessonResponse);
+    if ('lesson' in data && data.lesson) {
+      return data.lesson;
+    }
+    return data as LessonResponse;
   },
 
   async downloadPdf(id: number | string): Promise<Blob> {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/lessons/${id}/pdf/`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
