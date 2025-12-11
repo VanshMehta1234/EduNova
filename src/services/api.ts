@@ -30,13 +30,36 @@ async function request<T>(
 
   if (!response.ok) {
     let errorMessage = 'Request failed';
+    let errorData: any = null;
     try {
-      const error = await response.json();
-      errorMessage = error.detail || error.message || error.error || errorMessage;
+      errorData = await response.json();
+      // Handle Django REST Framework validation errors
+      if (errorData.email || errorData.password || errorData.username || errorData.full_name) {
+        // Extract field-specific errors
+        const fieldErrors: string[] = [];
+        if (errorData.email) {
+          fieldErrors.push(...(Array.isArray(errorData.email) ? errorData.email : [errorData.email]));
+        }
+        if (errorData.password) {
+          fieldErrors.push(...(Array.isArray(errorData.password) ? errorData.password : [errorData.password]));
+        }
+        if (errorData.username) {
+          fieldErrors.push(...(Array.isArray(errorData.username) ? errorData.username : [errorData.username]));
+        }
+        if (errorData.full_name) {
+          fieldErrors.push(...(Array.isArray(errorData.full_name) ? errorData.full_name : [errorData.full_name]));
+        }
+        errorMessage = fieldErrors.join('. ') || errorMessage;
+      } else {
+        // Handle other error formats
+        errorMessage = errorData.detail || errorData.message || errorData.error || errorMessage;
+      }
     } catch {
       errorMessage = `HTTP ${response.status}: ${response.statusText}`;
     }
-    throw new Error(errorMessage);
+    const error = new Error(errorMessage);
+    (error as any).data = errorData;
+    throw error;
   }
 
   const contentType = response.headers.get('content-type');

@@ -23,9 +23,12 @@ export const Login = () => {
       const response = await authApi.login(form);
       await login(response.tokens, response.user);
       // Refresh user data to ensure context is aligned with backend
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      let errorMessage = 'Login failed';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
       setError(errorMessage);
     } finally {
       setLoading(false);

@@ -96,7 +96,7 @@ export const Navbar = () => {
               <>
                 <Link to="/dashboard" className={getLinkClassName('/dashboard')}>
                   <IconDashboard />
-                  Dashboard
+                  Home
                 </Link>
                 <Link to="/explore" className={getLinkClassName('/explore')}>
                   <IconExplore />
