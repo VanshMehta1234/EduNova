@@ -6,6 +6,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
 import { NewLesson } from './pages/NewLesson';
+import { EditLesson } from './pages/EditLesson';
 import { LessonDetail } from './pages/LessonDetail';
 import { PublicLesson } from './pages/PublicLesson';
 import { Explore } from './pages/Explore';
@@ -39,6 +40,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <LessonDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/lessons/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <EditLesson />
                 </ProtectedRoute>
               }
             />

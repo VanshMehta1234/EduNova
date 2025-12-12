@@ -16,6 +16,32 @@ const IconCheck = () => (
   </svg>
 );
 
+const getVideoThumbnail = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+
+    if (host.includes('youtu.be')) {
+      const id = parsed.pathname.split('/')[1];
+      if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    }
+
+    if (host.includes('youtube.com')) {
+      const v = parsed.searchParams.get('v');
+      if (v) return `https://img.youtube.com/vi/${v}/hqdefault.jpg`;
+      const parts = parsed.pathname.split('/');
+      const embedIndex = parts.findIndex((p) => p === 'embed');
+      if (embedIndex !== -1 && parts[embedIndex + 1]) {
+        const id = parts[embedIndex + 1];
+        return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+      }
+    }
+  } catch {
+    // ignore parsing errors
+  }
+  return '';
+};
+
 const IconArrowLeft = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -164,6 +190,15 @@ export const PublicLesson = () => {
           <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">{lesson.description}</p>
         </div>
 
+        {lesson.content && (
+          <div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Main Lesson Content</h3>
+            <div className="prose prose-lg max-w-none">
+              <p className="text-gray-800 whitespace-pre-wrap leading-relaxed text-base">{lesson.content}</p>
+            </div>
+          </div>
+        )}
+
         {(lesson.activities || []).length > 0 && (
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Activities</h3>
@@ -224,11 +259,23 @@ export const PublicLesson = () => {
                   rel="noreferrer noopener"
                   className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-all duration-200 group cursor-pointer"
                 >
-                  <div className="flex-shrink-0 w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center group-hover:bg-red-700 transition-colors">
-                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                    </svg>
-                  </div>
+                  {getVideoThumbnail(video.url || '') ? (
+                    <img
+                      src={getVideoThumbnail(video.url || '')}
+                      alt={video.title || 'Video thumbnail'}
+                      className="w-20 h-14 rounded-md object-cover border border-gray-200 shadow-sm"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="flex-shrink-0 w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center group-hover:bg-red-700 transition-colors">
+                      <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                      </svg>
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate">
                       {video.title || 'Untitled Video'}

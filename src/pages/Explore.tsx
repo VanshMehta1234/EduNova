@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { lessonsApi, type LessonResponse } from '../api/lessons';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,18 +28,26 @@ const IconPdf = () => (
 
 export const Explore = () => {
   const { isAuthenticated } = useAuth();
+  const [allLessons, setAllLessons] = useState<LessonResponse[]>([]);
   const [lessons, setLessons] = useState<LessonResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [filterSubject, setFilterSubject] = useState<string>('');
+  const [filterGrade, setFilterGrade] = useState<string>('');
+  const [sortBy, setSortBy] = useState<string>('date-desc');
+  const [showFilters, setShowFilters] = useState(false);
+  const [showSort, setShowSort] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+  const sortRef = useRef<HTMLDivElement>(null);
 
   const fetchLessons = async (query = '') => {
     setError(null);
     setLoading(true);
     try {
       const data = await lessonsApi.listPublic(query);
-      setLessons(data);
+      setAllLessons(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load public lessons';
       setError(message);
@@ -64,10 +72,89 @@ export const Explore = () => {
   }, [debouncedQuery]);
 
   const clearSearch = () => setSearchQuery('');
+  const clearFilters = () => {
+    setFilterSubject('');
+    setFilterGrade('');
+  };
+
+  // Get unique values for filter dropdowns
+  const uniqueSubjects = useMemo(() => {
+    return Array.from(new Set(allLessons.map(l => l.subject).filter(Boolean))).sort();
+  }, [allLessons]);
+
+  const uniqueGrades = useMemo(() => {
+    return Array.from(new Set(allLessons.map(l => l.grade_level).filter(Boolean))).sort();
+  }, [allLessons]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+      if (sortRef.current && !sortRef.current.contains(event.target as Node)) {
+        setShowSort(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Apply filters and sorting
+  useEffect(() => {
+    let filtered = [...allLessons];
+
+    // Apply search filter
+    if (debouncedQuery) {
+      const query = debouncedQuery.toLowerCase();
+      filtered = filtered.filter(
+        (l) =>
+          l.topic.toLowerCase().includes(query) ||
+          l.subject.toLowerCase().includes(query) ||
+          l.grade_level.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply subject filter
+    if (filterSubject) {
+      filtered = filtered.filter((l) => l.subject === filterSubject);
+    }
+
+    // Apply grade filter
+    if (filterGrade) {
+      filtered = filtered.filter((l) => l.grade_level === filterGrade);
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'date-desc':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'date-asc':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'topic-asc':
+          return a.topic.localeCompare(b.topic);
+        case 'topic-desc':
+          return b.topic.localeCompare(a.topic);
+        case 'subject-asc':
+          return a.subject.localeCompare(b.subject);
+        case 'subject-desc':
+          return b.subject.localeCompare(a.subject);
+        case 'duration-asc':
+          return a.duration_minutes - b.duration_minutes;
+        case 'duration-desc':
+          return b.duration_minutes - a.duration_minutes;
+        default:
+          return 0;
+      }
+    });
+
+    setLessons(filtered);
+  }, [allLessons, debouncedQuery, filterSubject, filterGrade, sortBy]);
 
   const lessonCountText =
-    debouncedQuery && !loading
-      ? `Showing ${lessons.length} public lesson${lessons.length === 1 ? '' : 's'} for "${debouncedQuery}"`
+    (debouncedQuery || filterSubject || filterGrade) && !loading
+      ? `Showing ${lessons.length} of ${allLessons.length} public lesson${allLessons.length === 1 ? '' : 's'}`
       : `Showing ${lessons.length} public lesson${lessons.length === 1 ? '' : 's'}`;
 
   return (
@@ -96,24 +183,171 @@ export const Explore = () => {
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 transition-all duration-200 ease-in-out"
             />
           </div>
-          <button
-            className="px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm transition-all duration-200 ease-in-out flex items-center gap-1.5"
-            title="Filter lessons"
-          >
-            <span>Filters</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-          </button>
-          <button
-            className="px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm transition-all duration-200 ease-in-out flex items-center gap-1.5"
-            title="Sort lessons"
-          >
-            <span>Sort</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+          <div className="relative" ref={filterRef}>
+            <button
+              onClick={() => {
+                setShowFilters(!showFilters);
+                setShowSort(false);
+              }}
+              className={`px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm transition-all duration-200 ease-in-out flex items-center gap-1.5 ${
+                (filterSubject || filterGrade) ? 'border-blue-500 bg-blue-50' : ''
+              }`}
+              title="Filter lessons"
+            >
+              <span>Filters</span>
+              {(filterSubject || filterGrade) && (
+                <span className="bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  {[filterSubject, filterGrade].filter(Boolean).length}
+                </span>
+              )}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </button>
+            {showFilters && (
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-10 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-900">Filters</h4>
+                  {(filterSubject || filterGrade) && (
+                    <button
+                      onClick={clearFilters}
+                      className="text-xs text-blue-600 hover:text-blue-700"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Subject</label>
+                  <select
+                    value={filterSubject}
+                    onChange={(e) => setFilterSubject(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Subjects</option>
+                    {uniqueSubjects.map((subject) => (
+                      <option key={subject} value={subject}>
+                        {subject}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Grade Level</label>
+                  <select
+                    value={filterGrade}
+                    onChange={(e) => setFilterGrade(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Grades</option>
+                    {uniqueGrades.map((grade) => (
+                      <option key={grade} value={grade}>
+                        {grade}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="relative" ref={sortRef}>
+            <button
+              onClick={() => {
+                setShowSort(!showSort);
+                setShowFilters(false);
+              }}
+              className="px-4 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm transition-all duration-200 ease-in-out flex items-center gap-1.5"
+              title="Sort lessons"
+            >
+              <span>Sort</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {showSort && (
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 p-2">
+                <div className="space-y-1">
+                  <button
+                    onClick={() => {
+                      setSortBy('date-desc');
+                      setShowSort(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
+                      sortBy === 'date-desc' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
+                  >
+                    Date (Newest)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy('date-asc');
+                      setShowSort(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
+                      sortBy === 'date-asc' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
+                  >
+                    Date (Oldest)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy('topic-asc');
+                      setShowSort(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
+                      sortBy === 'topic-asc' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
+                  >
+                    Topic (A-Z)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy('topic-desc');
+                      setShowSort(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
+                      sortBy === 'topic-desc' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
+                  >
+                    Topic (Z-A)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy('subject-asc');
+                      setShowSort(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
+                      sortBy === 'subject-asc' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
+                  >
+                    Subject (A-Z)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy('duration-asc');
+                      setShowSort(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
+                      sortBy === 'duration-asc' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
+                  >
+                    Duration (Shortest)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy('duration-desc');
+                      setShowSort(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-100 ${
+                      sortBy === 'duration-desc' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
+                  >
+                    Duration (Longest)
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           {searchQuery && (
             <button
               onClick={clearSearch}

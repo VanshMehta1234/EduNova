@@ -31,6 +31,7 @@ export const NewLesson = () => {
   const [form, setForm] = useState<LessonInput>(defaultForm);
   const [generated, setGenerated] = useState<LessonContent | null>(null);
   const [description, setDescription] = useState('');
+  const [content, setContent] = useState('');
   const [activitiesText, setActivitiesText] = useState('');
   const [questionsText, setQuestionsText] = useState('');
   const [summary, setSummary] = useState('');
@@ -87,6 +88,7 @@ export const NewLesson = () => {
       const result = await lessonsApi.generate(form);
       setGenerated(result);
       setDescription(result.description);
+      setContent(result.content);
       setActivitiesText(result.activities.join('\n'));
       setQuestionsText(result.questions.join('\n'));
       setSummary(result.summary);
@@ -103,6 +105,7 @@ export const NewLesson = () => {
     return {
       ...form,
       description,
+      content,
       activities: parseList(activitiesText),
       questions: parseList(questionsText),
       summary,
@@ -312,6 +315,20 @@ export const NewLesson = () => {
                   placeholder="Lesson summary..."
                 />
               </div>
+            </div>
+
+            {/* Main Lesson Content */}
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-900">
+                Main Lesson Content
+              </label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-gray-400 transition-all duration-200 ease-in-out min-h-[300px] resize-y"
+                placeholder="Main lesson text content (article-like content that students will read)..."
+              />
+              <p className="text-xs text-gray-500">The main lesson text - comprehensive content that teaches the topic</p>
             </div>
 
             {/* Activities and Questions */}

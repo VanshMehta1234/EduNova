@@ -10,6 +10,7 @@ export interface LessonInput {
 
 export interface LessonContent extends LessonInput {
   description: string;
+  content: string;
   activities: string[];
   questions: string[];
   summary: string;
