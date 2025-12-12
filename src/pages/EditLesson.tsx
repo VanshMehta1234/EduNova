@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
-import { lessonsApi, type LessonContent, type LessonInput, type LessonResponse } from '../api/lessons';
+import { lessonsApi, type LessonInput } from '../api/lessons';
 
 const IconSparkles = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,7 +67,6 @@ export const EditLesson = () => {
   const [savingPublic, setSavingPublic] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isPublic, setIsPublic] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,7 +89,6 @@ export const EditLesson = () => {
         setSummary(lesson.summary || '');
         setImageUrlsText((lesson.image_urls || []).join(', '));
         setVideoLinksText((lesson.video_links || []).map((v) => `${v.title} | ${v.url}`).join('\n'));
-        setIsPublic(lesson.is_public);
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to load lesson';
         setError(message);
