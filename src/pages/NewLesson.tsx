@@ -20,6 +20,38 @@ const IconArrowLeft = () => (
   </svg>
 );
 
+const getVideoThumbnail = (url: string): string | null => {
+  if (!url) return null;
+  
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+
+    // youtu.be/<id>
+    if (host.includes('youtu.be')) {
+      const id = parsed.pathname.split('/')[1];
+      if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    }
+
+    // youtube.com/watch?v=<id> or other query formats
+    if (host.includes('youtube.com')) {
+      const v = parsed.searchParams.get('v');
+      if (v) return `https://img.youtube.com/vi/${v}/hqdefault.jpg`;
+      // handle /embed/<id>
+      const parts = parsed.pathname.split('/');
+      const embedIndex = parts.findIndex((p) => p === 'embed');
+      if (embedIndex !== -1 && parts[embedIndex + 1]) {
+        const id = parts[embedIndex + 1];
+        return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 const defaultForm: LessonInput = {
   topic: '',
   subject: '',
@@ -410,30 +442,45 @@ export const NewLesson = () => {
               </div>
               {parseVideoLinks(videoLinksText).length > 0 && (
                 <div className="space-y-2 mt-4">
-                  {parseVideoLinks(videoLinksText).map((video, index) => (
-                    <a
-                      key={`${video.url}-${index}`}
-                      href={video.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-all duration-200 group"
-                    >
-                      <div className="flex-shrink-0 w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center group-hover:bg-red-700 transition-colors">
-                        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                  {parseVideoLinks(videoLinksText).map((video, index) => {
+                    const thumbnail = getVideoThumbnail(video.url);
+                    return (
+                      <a
+                        key={`${video.url}-${index}`}
+                        href={video.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-all duration-200 group"
+                      >
+                        {thumbnail ? (
+                          <img
+                            src={thumbnail}
+                            alt={video.title || 'Video thumbnail'}
+                            className="w-20 h-14 rounded-md object-cover border border-gray-200 shadow-sm flex-shrink-0"
+                            loading="lazy"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="flex-shrink-0 w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center group-hover:bg-red-700 transition-colors">
+                            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                            </svg>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                            {video.title}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">{video.url}</p>
+                        </div>
+                        <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                          {video.title}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate">{video.url}</p>
-                      </div>
-                      <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </a>
-                  ))}
+                      </a>
+                    );
+                  })}
                 </div>
               )}
             </div>
