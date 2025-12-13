@@ -2,6 +2,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useState, useRef, useEffect } from 'react';
 
+interface NavbarProps {
+  variant?: 'default' | 'landing';
+  scrolled?: boolean;
+}
+
 // Icon components
 const IconDashboard = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,12 +44,24 @@ const IconChevronDown = () => (
   </svg>
 );
 
-export const Navbar = () => {
+export const Navbar = ({ variant = 'default', scrolled = false }: NavbarProps = {}) => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [internalScrolled, setInternalScrolled] = useState(false);
+
+  // Handle scroll effect for landing variant
+  useEffect(() => {
+    if (variant === 'landing') {
+      const handleScroll = () => setInternalScrolled(window.scrollY > 16);
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }
+  }, [variant]);
+
+  const isScrolled = variant === 'landing' ? internalScrolled : scrolled;
 
   const handleLogout = () => {
     logout();
@@ -81,13 +98,39 @@ export const Navbar = () => {
     return `${base} ${active}`;
   };
 
+  const navClassName = variant === 'landing'
+    ? `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? 'bg-white/95 backdrop-blur-xl shadow-md border-b border-slate-200/70'
+          : 'bg-white/70 backdrop-blur-xl border-b border-slate-100/60'
+      }`
+    : 'bg-white shadow-md';
+
+  const containerPadding = variant === 'landing' ? 'px-6 sm:px-8 lg:px-12' : 'px-4 sm:px-6 lg:px-8';
+
   return (
-    <nav className="bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className={navClassName}>
+      <div className={`max-w-7xl mx-auto ${containerPadding}`}>
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <span className="text-2xl font-bold text-blue-600">EduNova</span>
+              {variant === 'landing' ? (
+                <div className="flex items-center space-x-2.5">
+                  <div className="relative">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl opacity-15 blur-xl" />
+                  </div>
+                  <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-800 bg-clip-text text-transparent">
+                    EDUNOVA
+                  </span>
+                </div>
+              ) : (
+                <span className="text-2xl font-bold text-blue-600">EduNova</span>
+              )}
             </Link>
           </div>
           
@@ -141,21 +184,36 @@ export const Navbar = () => {
               </>
             ) : (
               <>
-                <Link to="/explore" className={getLinkClassName('/explore')}>
-                  <IconExplore />
-                  Explore
-                </Link>
+                {variant !== 'landing' && (
+                  <Link to="/explore" className={getLinkClassName('/explore')}>
+                    <IconExplore />
+                    Explore
+                  </Link>
+                )}
                 <Link
                   to="/login"
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                  className={variant === 'landing' 
+                    ? 'text-slate-700 hover:text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold transition-colors hover:bg-slate-50'
+                    : 'text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium'
+                  }
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                  className={variant === 'landing'
+                    ? 'relative bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-semibold shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35 transition-all duration-300 transform hover:-translate-y-0.5 overflow-hidden group'
+                    : 'bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700'
+                  }
                 >
-                  Register
+                  {variant === 'landing' ? (
+                    <>
+                      <span className="relative z-10">Get Started</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </>
+                  ) : (
+                    'Register'
+                  )}
                 </Link>
               </>
             )}

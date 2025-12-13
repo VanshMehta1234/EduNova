@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { LandingPage } from './pages/LandingPage';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Dashboard } from './pages/Dashboard';
@@ -15,47 +16,54 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Layout>
           <Routes>
+            <Route path="/" element={<Layout><LandingPage /></Layout>} />
             <Route
-              path="/"
+              path="/dashboard"
               element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
+                <Layout>
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                </Layout>
               }
             />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Layout><Login /></Layout>} />
+            <Route path="/register" element={<Layout><Register /></Layout>} />
             <Route
               path="/lessons/new"
               element={
-                <ProtectedRoute>
-                  <NewLesson />
-                </ProtectedRoute>
+                <Layout>
+                  <ProtectedRoute>
+                    <NewLesson />
+                  </ProtectedRoute>
+                </Layout>
               }
             />
             <Route
               path="/lessons/:id"
               element={
-                <ProtectedRoute>
-                  <LessonDetail />
-                </ProtectedRoute>
+                <Layout>
+                  <ProtectedRoute>
+                    <LessonDetail />
+                  </ProtectedRoute>
+                </Layout>
               }
             />
             <Route
               path="/lessons/:id/edit"
               element={
-                <ProtectedRoute>
-                  <EditLesson />
-                </ProtectedRoute>
+                <Layout>
+                  <ProtectedRoute>
+                    <EditLesson />
+                  </ProtectedRoute>
+                </Layout>
               }
             />
-            <Route path="/public/:slug" element={<PublicLesson />} />
-            <Route path="/explore" element={<Explore />} />
+            <Route path="/public/:slug" element={<Layout><PublicLesson /></Layout>} />
+            <Route path="/explore" element={<Layout><Explore /></Layout>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </Layout>
       </BrowserRouter>
     </AuthProvider>
   );
