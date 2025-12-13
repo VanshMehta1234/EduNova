@@ -1,18 +1,10 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useEffect } from 'react';
 
 const heroImage = '/hero_right.JPEG';
 
 export const LandingPage = () => {
-  const { isAuthenticated, isInitializing } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isAuthenticated && !isInitializing) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isAuthenticated, isInitializing, navigate]);
+  const { isInitializing } = useAuth();
 
   if (isInitializing) {
     return (
@@ -24,8 +16,6 @@ export const LandingPage = () => {
       </div>
     );
   }
-
-  if (isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-white antialiased -mx-4 sm:-mx-6 lg:-mx-8">
