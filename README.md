@@ -28,20 +28,13 @@ Actual application screens captured locally with fictional teacher and lesson re
 
 Lesson totals, public/private visibility, search, filters, and quick access to lesson actions.
 
-![EduNova dashboard with lesson statistics, searchable lesson table, visibility controls, and lesson actions](https://github.com/user-attachments/assets/a96cf37f-7a73-42ea-8762-5b280bb18806)
+![EduNova dashboard with lesson statistics, searchable lesson table, visibility controls, and lesson actions](docs/screenshots/dashboard.jpg)
 
 ### Lesson workspace
 
 A saved lesson with teaching content and controls for editing, visibility, and PDF export.
 
-![EduNova lesson detail screen with teaching content, editing, visibility, and PDF export controls](https://github.com/user-attachments/assets/7b68dd30-abfc-40fb-8c47-e1289a6b241e)
-
-<details>
-<summary><strong>View public homepage</strong></summary>
-
-![EduNova public landing page](https://github.com/user-attachments/assets/7c998d62-c324-4962-9e04-10346abf4bed)
-
-</details>
+![EduNova lesson detail screen with teaching content, editing, visibility, and PDF export controls](docs/screenshots/lesson-detail.jpg)
 
 ## The product workflow
 
