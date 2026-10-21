@@ -20,11 +20,28 @@ EduNova turns a topic, subject, grade level, and lesson duration into a structur
 
 **This repository contains the React frontend.** AI generation, authentication, persistence, and PDF generation are provided by the companion Django API. The public landing page and lesson explorer are available without signing in; creating and managing lessons requires an account and a working backend.
 
-## Screenshot
+## Screenshots
 
-Public landing page of the hosted application. Creating and managing lessons requires an account.
+Actual application screens captured locally with fictional teacher and lesson records. Backend responses are simulated for this demo.
 
-![EduNova landing page with AI lesson-planning introduction and public exploration links](https://github.com/user-attachments/assets/7c998d62-c324-4962-9e04-10346abf4bed)
+### Lesson management dashboard
+
+Lesson totals, public/private visibility, search, filters, and quick access to lesson actions.
+
+![EduNova dashboard with lesson statistics, searchable lesson table, visibility controls, and lesson actions](https://github.com/user-attachments/assets/a96cf37f-7a73-42ea-8762-5b280bb18806)
+
+### Lesson workspace
+
+A saved lesson with teaching content and controls for editing, visibility, and PDF export.
+
+![EduNova lesson detail screen with teaching content, editing, visibility, and PDF export controls](https://github.com/user-attachments/assets/7b68dd30-abfc-40fb-8c47-e1289a6b241e)
+
+<details>
+<summary><strong>View public homepage</strong></summary>
+
+![EduNova public landing page](https://github.com/user-attachments/assets/7c998d62-c324-4962-9e04-10346abf4bed)
+
+</details>
 
 ## The product workflow
 
